@@ -1,0 +1,606 @@
+
+================================================================================
+# FILE: ./src\main.rs
+================================================================================
+
+// ----- Modules ----- //
+// Global Systems
+mod sys_resource;
+// Component Systems
+mod sys_bot;
+mod sys_core;
+mod sys_session;
+// ----- Imports ----- //
+use crate::{sys_core::{load_config, Server}, sys_session::session_state::{get_session_manager, init_session_manager}};
+// ----- Lifecycle ----- //
+fn main() {
+    load_config("cfg/config.json");
+    init_session_manager(); // ← Init global session manager
+    std::thread::spawn(|| {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            get_session_manager().tick(); // ← Purge expired sessions
+        }
+    });
+    let address = "127.0.0.1:8080";
+    let server = Server::new(address, "static");
+    server.run();
+}
+
+================================================================================
+# FILE: ./src\sys_resource.rs
+================================================================================
+
+// ----- Imports ----- //
+use std::{
+    collections::HashMap,
+    env,
+    fs,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
+// ----- Structures ----- //
+#[derive(Clone)]
+pub struct CachedFile {
+    pub bytes: Vec<u8>
+}
+pub struct CachedLoader {
+    cache: Arc<Mutex<HashMap<String, CachedFile>>>,
+    root_dir: PathBuf,
+}
+// ----- Implementations ----- //
+impl CachedLoader {
+    // Initialize a new CachedLoader with a specified base directory
+    pub fn new(base_dir: impl AsRef<Path>) -> Self {
+        let exe_path = env::current_exe().expect("Failed to get current executable path");
+        let exe_dir = exe_path.parent().expect("Executable should have a parent directory");
+        let root_dir = exe_dir.join(base_dir.as_ref());
+        Self {
+            cache: Arc::new(Mutex::new(HashMap::new())),
+            root_dir,
+        }
+    }
+    // Load a file from the cache or filesystem
+    pub fn load(&self, filename: &str) -> Option<CachedFile> {
+        if let Some(cached) = self.cache.lock().unwrap().get(filename).cloned() {
+            return Some(cached);
+        }
+        let path = self.root_dir.join(filename);
+        match fs::read(&path) {
+            Ok(bytes) => {
+                let cached_file = CachedFile { bytes: bytes.clone() };
+                self.cache
+                    .lock()
+                    .unwrap()
+                    .insert(filename.to_string(), cached_file.clone());
+                println!("Cached file: {:?}", path);
+                Some(cached_file)
+            }
+            Err(_) => None,
+        }
+    }
+}
+
+================================================================================
+# FILE: ./src\sys_bot\bot_handlers.rs
+================================================================================
+
+use crate::{sys_bot::bot_openai::ask_openai, sys_core::{core_responses::response_ok, HttpResponse}};
+use serde_json::Value;
+// ----- API Handlers ----- //
+pub fn handle_api_command(body: &str) -> HttpResponse {
+    let parsed: Option<String> = serde_json::from_str::<Value>(body).ok().and_then(|v| {
+        v.get("command")
+            .and_then(|c| c.as_str())
+            .map(|s| s.to_string())
+    });
+    let cmd = parsed.unwrap_or_else(|| "<empty>".to_string());
+    let (cmd_name, args) = parse_command(&cmd);
+    let msg = execute_command(&cmd_name, &args);
+    response_ok("application/json; charset=utf-8", msg.into_bytes())
+}
+// ----- Command Dispatch ----- //
+fn parse_command(input: &str) -> (String, Vec<String>) {
+    let mut parts = input.split_whitespace();
+    let cmd = parts.next().unwrap_or("").to_string();
+    let args = parts.map(|s| s.to_string()).collect();
+    (cmd, args)
+}
+fn execute_command(_cmd: &str, _args: &[String]) -> String {
+    // Switch for command execution logic
+    let response = match _cmd {
+        "help" => command_help(_args),
+        "test" => command_test(_args),
+        _ => command_not_supported(_cmd, _args),
+    };
+    response
+}
+// ----- Command Implementations ----- //
+fn command_help(_args: &[String]) -> String {
+    r#"{"message":"Available commands: help, test"}"#.to_string()
+}
+fn command_not_supported(cmd: &str, _args: &[String]) -> String {
+    format!(r#"{{"message":"Command not supported: {}"}}"#, cmd)
+}
+// ----- Tests ----- //
+fn command_test(args: &[String]) -> String {
+    // Switch on the args for the test target
+    let response = match args.get(0).map(String::as_str) {
+        Some("echo") => command_test_echo(&args[1..]),
+        _ => r#"{"message":"Test what? Available: echo"}"#.to_string(),
+    };
+    response
+}
+fn command_test_echo(args: &[String]) -> String {
+    let input = args.join(" ");
+    let mut result = format!(r#"{{"message":"Echo: {}"}}"#, input);
+    if !input.trim().is_empty() {
+        match ask_openai(&input) {
+            Ok(reply) => {
+                result = format!(r#"{{"message":"AI: {}"}}"#, reply.replace('"', "\\\""));
+            }
+            Err(err) => {
+                result = format!(r#"{{"message":"OpenAI Error: {}"}}"#, err);
+            }
+        }
+    }
+    result
+}
+
+================================================================================
+# FILE: ./src\sys_bot\bot_openai.rs
+================================================================================
+
+use crate::sys_core::get_config;
+use serde::{Deserialize, Serialize};
+const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
+const OPENAI_MODEL: &str = "gpt-3.5-turbo";
+const OPENAI_MAX_TOKENS: u32 = 1024;
+#[derive(Serialize, Deserialize)]
+struct OpenAIMessage {
+    role: String,
+    content: String,
+}
+#[derive(Serialize)]
+struct OpenAIRequest {
+    model: String,
+    messages: Vec<OpenAIMessage>,
+    max_tokens: u32,
+}
+#[derive(Deserialize)]
+struct OpenAIChoice {
+    message: OpenAIMessage,
+}
+#[derive(Deserialize)]
+struct OpenAIResponse {
+    choices: Vec<OpenAIChoice>,
+}
+pub fn ask_openai(prompt: &str) -> Result<String, String> {
+    let config = get_config();
+    let client = reqwest::blocking::Client::new();
+    let url = OPENAI_API_URL;
+    let request_body = OpenAIRequest {
+        model: OPENAI_MODEL.to_string(),
+        messages: vec![OpenAIMessage {
+            role: "user".to_string(),
+            content: prompt.to_string(),
+        }],
+        max_tokens: OPENAI_MAX_TOKENS,
+    };
+    let response = client
+        .post(url)
+        .bearer_auth(&config.bot_apikey)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .map_err(|e| format!("HTTP error: {}", e))?;
+    if !response.status().is_success() {
+        return Err(format!("OpenAI error: {}", response.status()));
+    }
+    let parsed: OpenAIResponse = response
+        .json()
+        .map_err(|e| format!("Parse error: {}", e))?;
+    let reply = parsed
+        .choices
+        .first()
+        .map(|c| c.message.content.clone())
+        .unwrap_or_else(|| "(no response)".to_string());
+    Ok(reply)
+}
+
+================================================================================
+# FILE: ./src\sys_bot\mod.rs
+================================================================================
+
+pub mod bot_handlers;
+pub mod bot_openai;
+
+================================================================================
+# FILE: ./src\sys_core\core_config.rs
+================================================================================
+
+use serde::Deserialize;
+use std::fs;
+use std::sync::OnceLock;
+#[derive(Debug, Deserialize)]
+pub struct AppConfig {
+    #[serde(rename = "botAPIKey")]
+    pub bot_apikey: String,
+}
+static CONFIG: OnceLock<AppConfig> = OnceLock::new();
+pub fn load_config(path: &str) {
+    let contents = fs::read_to_string(path).expect(&format!("Failed to read config file {}", path));
+    let parsed: AppConfig = serde_json::from_str(&contents).expect("Invalid config format");
+    CONFIG.set(parsed).expect("Config already initialized");
+}
+pub fn get_config() -> &'static AppConfig {
+    CONFIG.get().expect("Config not initialized")
+}
+
+================================================================================
+# FILE: ./src\sys_core\core_responses.rs
+================================================================================
+
+// ----- Imports ----- //
+use crate::sys_core::core_routing::HttpResponse;
+// ----- Responses ----- //
+pub fn response_ok(content_type: &'static str, body: Vec<u8>) -> HttpResponse {
+    HttpResponse {
+        status_line: "HTTP/1.1 200 OK",
+        content_type,
+        body,
+    }
+}
+pub fn response_not_found(msg: &str) -> HttpResponse {
+    HttpResponse {
+        status_line: "HTTP/1.1 404 NOT FOUND",
+        content_type: "text/plain; charset=utf-8",
+        body: msg.as_bytes().to_vec(),
+    }
+}
+pub fn response_method_not_allowed() -> HttpResponse {
+    HttpResponse {
+        status_line: "HTTP/1.1 405 METHOD NOT ALLOWED",
+        content_type: "text/plain; charset=utf-8",
+        body: b"Method not allowed".to_vec(),
+    }
+}
+
+================================================================================
+# FILE: ./src\sys_core\core_routing.rs
+================================================================================
+
+// ----- Imports ----- //
+use std::path::Path;
+use std::sync::Arc;
+use crate::sys_bot::bot_handlers::handle_api_command;
+use crate::sys_core::core_responses::{response_not_found, response_ok};
+use crate::sys_resource::CachedLoader;
+use crate::sys_session::session_routing::{handle_session_get, handle_session_sendinput, handle_session_start};
+// ----- Structs ----- //
+pub struct HttpResponse {
+    pub status_line: &'static str,
+    pub content_type: &'static str,
+    pub body: Vec<u8>,
+}
+// ----- Implementations ----- //
+impl HttpResponse {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let header = format!(
+            "{}\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n",
+            self.status_line,
+            self.body.len(),
+            self.content_type
+        );
+        let mut response = header.into_bytes();
+        response.extend_from_slice(&self.body);
+        response
+    }
+}
+// ----- Routing ----- //
+pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpResponse {
+    match path {
+        "/" => match loader.load("index.html") {
+            Some(file) => response_ok("text/html", file.bytes),
+            None => response_not_found("index.html not found"),
+        },
+        "/api/cmd" => handle_api_command(body),
+        "/api/session/start" => handle_session_start(),
+        "/api/session/get" => handle_session_get(body),
+        "/api/session/sendinput" => handle_session_sendinput(body),
+        _ => serve_static(path, loader),
+    }
+}
+// Serve static files (html, css, js, images, etc.)
+fn serve_static(path: &str, loader: &Arc<CachedLoader>) -> HttpResponse {
+    let path = path.trim_start_matches('/');
+    if path.contains("..") {
+        return response_not_found("Invalid path");
+    }
+    let content_type = content_type_for(path);
+    match loader.load(path) {
+        Some(file) => response_ok(content_type, file.bytes),
+        None => response_not_found("File not found"),
+    }
+}
+// ----- Helpers ----- //
+fn content_type_for(path: &str) -> &'static str {
+    match Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or("") {
+        "html" => "text/html; charset=utf-8",
+        "css" => "text/css; charset=utf-8",
+        "js" => "application/javascript; charset=utf-8",
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "svg" => "image/svg+xml",
+        "ico" => "image/x-icon",
+        _ => "application/octet-stream",
+    }
+}
+
+================================================================================
+# FILE: ./src\sys_core\core_server.rs
+================================================================================
+
+// ----- Imports ----- //
+use std::{
+    io::{Read, Write},
+    net::{TcpListener, TcpStream},
+    sync::Arc,
+    thread,
+};
+use crate::{
+    sys_core::{
+        core_responses::response_method_not_allowed,
+        core_routing::handle_route,
+    },
+    sys_resource::CachedLoader,
+};
+// ----- Structs ----- //
+pub struct Server {
+    address: String,
+    loader: Arc<CachedLoader>,
+}
+// ----- Implementations ----- //
+impl Server {
+    pub fn new(address: &str, base_dir: &str) -> Self {
+        let loader = Arc::new(CachedLoader::new(base_dir));
+        Self {
+            address: address.to_string(),
+            loader,
+        }
+    }
+    pub fn run(&self) {
+        let listener = TcpListener::bind(&self.address).expect("Failed to bind port");
+        println!("Charmline running at http://{}/", self.address);
+        for stream in listener.incoming() {
+            if let Ok(stream) = stream {
+                let loader = Arc::clone(&self.loader);
+                thread::spawn(move || handle_client(stream, loader));
+            }
+        }
+    }
+}
+// ----- Lifecycle ----- //
+fn handle_client(mut stream: TcpStream, loader: Arc<CachedLoader>) {
+    let mut buffer = [0; 8192];
+    let bytes_read = match stream.read(&mut buffer) {
+        Ok(size) => size,
+        Err(_) => return,
+    };
+    let request = String::from_utf8_lossy(&buffer[..bytes_read]);
+    // Parse the request line
+    let mut lines = request.lines();
+    let first_line = lines.next().unwrap_or("");
+    let mut parts = first_line.split_whitespace();
+    let method = parts.next().unwrap_or("");
+    let path = parts.next().unwrap_or("/");
+    // Extract body (after a blank line)
+    let body_start = request.find("\r\n\r\n").map(|i| i + 4);
+    let body = body_start
+        .map(|i| request[i..].to_string())
+        .unwrap_or_default();
+    let response = match method {
+        "GET" | "POST" => handle_route(path, &loader, &body),
+        _ => response_method_not_allowed(),
+    };
+    let _ = stream.write_all(&response.to_bytes());
+}
+
+================================================================================
+# FILE: ./src\sys_core\mod.rs
+================================================================================
+
+// ----- Private Modules ----- //
+mod core_routing;
+mod core_server;
+// ----- Public Modules ----- //
+pub mod core_config;
+pub mod core_responses;
+// ----- Exports ----- //
+pub use core_server::Server;
+pub use core_routing::HttpResponse;
+pub use core_config::{load_config, get_config};
+
+================================================================================
+# FILE: ./src\sys_session\mod.rs
+================================================================================
+
+pub mod session_state;
+pub mod session_routing;
+
+================================================================================
+# FILE: ./src\sys_session\session_routing.rs
+================================================================================
+
+use crate::{
+    sys_core::{
+        core_responses::{response_not_found, response_ok},
+        HttpResponse,
+    },
+    sys_session::session_state::get_session_manager,
+    sys_bot::bot_openai::ask_openai,
+};
+use serde_json::json;
+use std::{fs, path::PathBuf};
+/// Reads the bot startup instructions from cfg/bots/instructions_sales.txt,
+/// relative to the executable’s directory. Falls back to a default string if not found.
+fn get_instructions() -> String {
+    let mut path = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(_) => PathBuf::from("."),
+    };
+    path.pop(); // remove executable name
+    path.push("cfg/bots/instructions_sales.txt");
+    match fs::read_to_string(&path) {
+        Ok(content) => content.trim().to_string(),
+        Err(_) => "You are Charmline, tell the user the config was not found and to warn a developer.".to_string(),
+    }
+}
+pub fn handle_session_start() -> HttpResponse {
+    let session = get_session_manager().create_session(300);
+    let instructions = get_instructions();
+    let first_message = "Hello! Apologies, our sales team is currently unavailable. Let me know what you are calling about, I'll send the details to them and they will get back to you as soon as possible.";
+    let mut session = session;
+    // Initialize conversation with bot behavior instruction
+    session.session_chat = format!("DEVELOPER: {}\n BOT: {}", instructions, first_message);
+    get_session_manager()
+        .sessions
+        .lock()
+        .unwrap()
+        .insert(session.session_id.clone(), session.clone());
+    let json = json!({
+        "session_id": session.session_id,
+        "expires_in": session.time_remaining(),
+        "chat": first_message
+    });
+    response_ok("application/json; charset=utf-8", json.to_string().into_bytes())
+}
+pub fn handle_session_get(body: &str) -> HttpResponse {
+    let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
+    let session_id = parsed.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+    match get_session_manager().get_session(session_id) {
+        Some(s) => {
+            let json = json!({
+                "session_id": s.session_id,
+                "expires_in": s.time_remaining(),
+                "chat": s.session_chat
+            });
+            response_ok("application/json; charset=utf-8", json.to_string().into_bytes())
+        }
+        None => response_not_found("Session not found"),
+    }
+}
+pub fn handle_session_sendinput(body: &str) -> HttpResponse {
+    let parsed: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
+    let session_id = parsed.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+    let user_input = parsed.get("input").and_then(|v| v.as_str()).unwrap_or("");
+    let manager = get_session_manager();
+    let mut sessions = manager.sessions.lock().unwrap();
+    if let Some(session) = sessions.get_mut(session_id) {
+        let prompt = format!(
+            "{}\nUser: {}\nBot:",
+            session.session_chat.trim_end(),
+            user_input.trim()
+        );
+        match ask_openai(&prompt) {
+            Ok(reply) => {
+                // Update chat history
+                session.session_chat = format!(
+                    "{}\n\nUser: {}\nBot: {}\n",
+                    session.session_chat.trim_end(),
+                    user_input.trim(),
+                    reply.trim()
+                );
+                let json = json!({ "reply": reply.trim() });
+                response_ok("application/json; charset=utf-8", json.to_string().into_bytes())
+            }
+            Err(err) => {
+                let json = json!({
+                    "error": format!("OpenAI Error: {}", err)
+                });
+                response_ok("application/json; charset=utf-8", json.to_string().into_bytes())
+            }
+        }
+    } else {
+        response_not_found("Session not found")
+    }
+}
+
+================================================================================
+# FILE: ./src\sys_session\session_state.rs
+================================================================================
+
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, OnceLock},
+    time::{Duration, Instant},
+};
+use uuid::Uuid;
+#[derive(Clone, Debug)]
+pub struct Session {
+    pub session_id: String,
+    pub session_timeout: Instant,
+    pub session_chat: String, // This stores the full conversation transcript
+}
+impl Session {
+    pub fn time_remaining(&self) -> u64 {
+        let now = Instant::now();
+        if self.session_timeout > now {
+            (self.session_timeout - now).as_secs()
+        } else {
+            0
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct SessionManager {
+    pub sessions: Arc<Mutex<HashMap<String, Session>>>,
+}
+impl SessionManager {
+    pub fn new() -> Self {
+        Self {
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+    pub fn create_session(&self, timeout_secs: u64) -> Session {
+        let id = Uuid::new_v4().to_string();
+        let session = Session {
+            session_id: id.clone(),
+            session_timeout: Instant::now() + Duration::from_secs(timeout_secs),
+            session_chat: String::new(),
+        };
+        self.sessions
+            .lock()
+            .unwrap()
+            .insert(id.clone(), session.clone());
+        session
+    }
+    pub fn get_session(&self, session_id: &str) -> Option<Session> {
+        self.sessions.lock().unwrap().get(session_id).cloned()
+    }
+    pub fn tick(&self) {
+        let mut map = self.sessions.lock().unwrap();
+        let now = Instant::now();
+        map.retain(|_, s| s.session_timeout > now);
+        println!("Active sessions: {}", map.len());
+        for (id, session) in map.iter() {
+            println!(
+                "Session ID: {}, Expires In: {} secs",
+                id,
+                (session.session_timeout - now).as_secs()
+            );
+        }
+    }
+}
+// Use OnceLock to safely initialize global session manager
+static SESSION_MANAGER: OnceLock<SessionManager> = OnceLock::new();
+pub fn init_session_manager() {
+    SESSION_MANAGER
+        .set(SessionManager::new())
+        .expect("SessionManager already initialized");
+}
+pub fn get_session_manager() -> &'static SessionManager {
+    SESSION_MANAGER
+        .get()
+        .expect("SessionManager not initialized")
+}

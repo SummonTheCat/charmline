@@ -1,0 +1,130 @@
+:root {
+    --bg: #f9f9fb;
+    --fg: #222;
+    --muted: #555;
+    --accent: #195ea8;
+    --border: #ddd;
+    --panel-bg: #fff;
+    --font: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+nav {
+    width: 300px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+nav a {
+    width: 100px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.95rem;
+    transition: 0.2s ease;
+}
+
+nav a:hover {
+    font-weight: 700;
+}
+
+
+nav a.active {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    padding: 2rem;
+    gap: 2rem;
+    align-items: stretch;
+    justify-content: center;
+}
+
+section {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+section h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.recent-list {
+    list-style: none;
+    flex: 1;
+}
+
+.recent-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--muted);
+}
+
+.recent-list li:last-child {
+    border-bottom: none;
+}
+
+.chat-details p {
+    margin-bottom: 0.6rem;
+    font-size: 0.95rem;
+    color: var(--muted);
+}
+
+.lorem-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    max-width: 600px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+footer {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
