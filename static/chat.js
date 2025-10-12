@@ -154,7 +154,7 @@ let listening = false;
 let finalTranscript = "";
 let interimTranscript = "";
 let silenceTimer = null;
-const silenceDelay = 3000; // wait a bit longer before sending
+const silenceDelay = 1500;
 let audioCtx, analyser, micSource, dataArray, animationId;
 
 async function startMicVisualizer() {
@@ -267,7 +267,20 @@ function flashSentState() {
 }
 
 // --- Client-side Text-to-Speech (TTS) ---
+// --- Client-side Text-to-Speech (TTS) Configuration ---
 let ttsEnabled = true;
+
+// 🔧 Easily Adjustable TTS Settings
+let ttsConfig = {
+    rate: 1.2,           // 1.0 = normal speed (range: 0.5–2.0)
+    pitch: 0.9,          // 1.0 = normal tone (range: 0.5–2.0)
+    volume: 1.0,         // 1.0 = full volume (range: 0–1)
+    preferredAccents: ["en-GB", "en-ZA", "en-US"], // priority order
+};
+
+// Example of updating settings live:
+// ttsConfig.rate = 1.2;
+// ttsConfig.preferredAccents = ["en-GB", "en-US"];
 
 function toggleTTS() {
     ttsEnabled = !ttsEnabled;
@@ -282,21 +295,21 @@ function toggleTTS() {
 function speakText(text, onEndCallback) {
     if (!ttsEnabled || !window.speechSynthesis) return;
 
-    // Stop any ongoing speech
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-ZA"; // South African English if available
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
 
-    // Pick the most natural voice
+    utterance.lang = ttsConfig.preferredAccents[0]; // fallback to first
+    utterance.rate = ttsConfig.rate;
+    utterance.pitch = ttsConfig.pitch;
+    utterance.volume = ttsConfig.volume;
+
     const voices = window.speechSynthesis.getVoices();
-    const preferred =
-        voices.find(v => v.lang.startsWith("en-ZA")) ||
-        voices.find(v => v.lang.startsWith("en-GB")) ||
-        voices.find(v => v.lang.startsWith("en-US"));
+
+    // Select the best matching accent
+    const preferred = ttsConfig.preferredAccents
+        .map(code => voices.find(v => v.lang.startsWith(code)))
+        .find(Boolean);
+
     if (preferred) utterance.voice = preferred;
 
     utterance.onstart = () => {
@@ -308,7 +321,7 @@ function speakText(text, onEndCallback) {
         statusIndicator.textContent = "Idle";
         micBtn.style.opacity = "1";
 
-        // Automatically resume listening when TTS ends
+        // Resume listening automatically
         if (recognition && !listening) {
             try {
                 recognition.start();
@@ -324,10 +337,12 @@ function speakText(text, onEndCallback) {
     window.speechSynthesis.speak(utterance);
 }
 
-
-// preload voices in Chrome
+// Preload voices for Chrome
 if (window.speechSynthesis) {
-    window.speechSynthesis.onvoiceschanged = () => { };
+    window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+        console.log("🔊 Voices preloaded");
+    };
 }
 
 

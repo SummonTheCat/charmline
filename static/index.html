@@ -1,45 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Charmline | Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+
+    <!-- Shared Charmline Core Theme -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="tempindex.css" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@200..800&family=Outfit:wght@100..900&display=swap"
+        rel="stylesheet" />
+
+    <style>
+
+    </style>
 </head>
+
 <body>
     <header>
         <h1>Charmline</h1>
         <nav>
             <a href="/" class="active">Dashboard</a>
+            <a href="logs.html">Logs</a>
             <a href="chat.html">Chat</a>
             <a href="settings.html">Settings</a>
         </nav>
     </header>
 
     <main>
-        <section>
-            <h2>Recent Activity</h2>
-            <ul class="recent-list">
-                <li>Call #321 · Duration: 3m 14s</li>
-                <li>Call #320 · Duration: 5m 02s</li>
-                <li>Call #319 · Duration: 1m 44s</li>
-                <li>Call #318 · Duration: 2m 56s</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>Chat Details</h2>
-            <div class="chat-details">
-                <p><strong>Session:</strong> #321</p>
-                <p><strong>Started:</strong> 10:04 AM</p>
-                <p><strong>Participants:</strong> 2</p>
-                <p><strong>Summary:</strong> Discussed new routing logic and caching updates.</p>
+        <h2>System Overview</h2>
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>Total Sessions</p>
             </div>
-        </section>
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>Active Today</p>
+            </div>
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>This Week</p>
+            </div>
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>Unique Companies</p>
+            </div>
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>Unique Callers</p>
+            </div>
+            <div class="stat-card">
+                <h3>—</h3>
+                <p>Avg Duration</p>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div>
+                <h2>Top Companies</h2>
+                <table id="companies-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h2>Top Tags</h2>
+                <table id="tags-table">
+                    <thead>
+                        <tr>
+                            <th>Tag</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <h2>Solution Type Frequency</h2>
+            <table id="solutions-table">
+                <thead>
+                    <tr>
+                        <th>Solution Type</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="2">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="space-larger"></div>
+
+        <div class="chart-container">
+            <h2>Sessions Over Time (Last 7 Days)</h2>
+            <canvas id="sessionsChart"></canvas>
+        </div>
+
+
     </main>
 
     <footer>
         Charmline © 2025
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard.js"></script>
 </body>
+
 </html>

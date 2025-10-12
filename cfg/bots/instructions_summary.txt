@@ -16,8 +16,29 @@ Caller Number
 Company
 Solution Type
 Project Details
-Follow-up Notes: give detailed notes of any aditional context or requirements mentioned by the caller, including urgency or specific needs.
+Additional Notes: give detailed notes of any aditional context or requirements mentioned by the caller, including urgency or specific needs.
+Tags: add relevant tags like "urgent", "extension", "new build", "nda", etc. based on the conversation.
 
-If information is missing, note it as "Not Provided".
+If information is missing, leave it blank "".
 
-Give this summary in a CSV-friendly format, with each item on a new line.
+Give this summary in very specific json format:
+{
+  "callerName": "",
+  "callerNumber": "",
+  "company": "",
+  "solutionType": "",
+  "projectDetails": "",
+  "additionalNotes": "",
+  "tags": [] 
+}
+
+Here is an example:
+{
+  "callerName": "Julien Liacos",
+  "callerNumber": "0724456657",
+  "company": "TM Logistics",
+  "solutionType": "Modular warehouse extension",
+  "projectDetails": "Extend existing modular warehouse by 600 square meters with proper insulation and rolling doors at office in Germiston. Prefers foundation solution, timeframe about half a week. There is an existing slab foundation",
+  "additionalNotes": "Purpose of the extension needs NDA to discuss. Urgency mentioned for NDA signing and possible foundation solution. Follow-up required for further details.",
+  "tags": ["urgent", "extension", "nda"]
+}

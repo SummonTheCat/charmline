@@ -16,8 +16,17 @@ Caller Number
 Company
 Solution Type
 Project Details
-Follow-up Notes: give detailed notes of any aditional context or requirements mentioned by the caller, including urgency or specific needs.
+Additional Notes: give detailed notes of any aditional context or requirements mentioned by the caller, including urgency or specific needs.
 
-If information is missing, note it as "Not Provided".
+If information is missing, leave it blank "".
 
-Give this summary in a CSV-friendly format, with each item on a new line.
+Give this summary in very specific json format:
+{
+  "callerName": "",
+  "callerNumber": "",
+  "company": "",
+  "solutionType": "",
+  "projectDetails": "",
+  "additionalNotes": ""
+}
+

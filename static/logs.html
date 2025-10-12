@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Charmline | Logs</title>
+
+    <!-- Shared Charmline Core Theme -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@200..800&family=Outfit:wght@100..900&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        /* ===== Logs-Specific Styling ===== */
+
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            /* Prevent main scroll */
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* --- Panel Containers --- */
+        .left-panel,
+        .right-panel {
+            height: calc(100vh - 120px);
+            /* Header + footer space */
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .left-panel {
+            width: 35%;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #0f1018;
+            padding: 1.5rem 2rem;
+        }
+
+        /* --- Headings --- */
+        h2 {
+            font-family: "Outfit", sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* --- Recent Calls --- */
+        .recent-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .recent-list li {
+            padding: 0.9rem 1rem;
+            border-radius: var(--radius);
+            background: #101218;
+            border: 1px solid var(--border);
+            color: #ddd;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .recent-list li:hover {
+            background: #181b24;
+            transform: translateY(-1px);
+        }
+
+        .recent-list li.active {
+            background: #1a263b;
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* --- Call Details --- */
+        .chat-details {
+            background: #101218;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+            padding: 1.5rem 1.8rem;
+            color: var(--text);
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .chat-details h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-family: "Outfit", sans-serif;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .transcript-chat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+
+        .bot-msg,
+        .user-msg {
+            padding: 0.7rem 1rem;
+            border-radius: var(--radius);
+            max-width: 85%;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: #101118;
+            color: #dcdcdc;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: #1c2a46;
+            color: #d8eaff;
+        }
+
+        .meta-line {
+            margin: 0.3rem 0;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        strong {
+            color: var(--accent);
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(77, 163, 255, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(77, 163, 255, 0.3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Transcript --- */
+        pre {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background: #0a0b10;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            color: #ccc;
+            line-height: 1.45;
+        }
+
+        /* --- Scrollbars --- */
+        .left-panel::-webkit-scrollbar,
+        .right-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb,
+        .right-panel::-webkit-scrollbar-thumb {
+            background: var(--scroll-thumb);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Charmline</h1>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="logs.html" class="active">Logs</a>
+            <a href="chat.html">Chat</a>
+            <a href="settings.html">Settings</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="left-panel">
+            <h2>Recent Calls</h2>
+            <ul class="recent-list" id="recent-list">
+                <li>Loading calls...</li>
+            </ul>
+        </section>
+
+        <section class="right-panel">
+            <h2>Call Details</h2>
+            <div class="chat-details" id="chat-details">
+                <p>Select a call from the list to view details.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Charmline © 2025
+    </footer>
+
+    <script>
+        async function fetchArtifacts() {
+            const res = await fetch("/api/session/listartifacts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: "{}"
+            });
+            const data = await res.json();
+            return data.artifacts || [];
+        }
+
+        async function fetchArtifactDetails(sessionId) {
+            const res = await fetch("/api/session/getartifact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sessionId })
+            });
+            return await res.json();
+        }
+
+        function formatDurationSeconds(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}m ${s.toString().padStart(2, "0")}s`;
+        }
+
+        function renderArtifactList(artifacts) {
+            const list = document.getElementById("recent-list");
+            list.innerHTML = "";
+
+            if (!artifacts.length) {
+                list.innerHTML = "<li>No call records found.</li>";
+                return;
+            }
+
+            artifacts.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+
+            artifacts.forEach((item) => {
+                const li = document.createElement("li");
+                const startTime = item.start_time ? new Date(item.start_time).toLocaleString() : "Unknown";
+                const duration = item.duration_seconds ? formatDurationSeconds(item.duration_seconds) : "—";
+                li.innerHTML = `
+            <div><strong>${item.company || "Unknown Company"}</strong></div>
+            <div style="font-size:0.85rem;color:#aaa;">
+                ${startTime} &nbsp;•&nbsp; ${duration}
+            </div>
+        `;
+                li.onclick = () => showArtifactDetails(item.session_id, li);
+                list.appendChild(li);
+            });
+        }
+
+        function parseTranscript(transcript) {
+            const messages = [];
+            const regex = /(Bot|User):\s*([^]+?)(?=(?:Bot|User):|$)/g;
+            let match;
+            while ((match = regex.exec(transcript)) !== null) {
+                const sender = match[1].trim();
+                const text = match[2].trim().replace(/\s+/g, " ");
+                messages.push({ sender, text });
+            }
+            return messages;
+        }
+
+        function renderTranscript(messages) {
+            if (!messages.length) return "<p>No transcript available.</p>";
+
+            return `
+        <div class="transcript-chat">
+            ${messages
+                    .map((msg) => {
+                        const cls = msg.sender === "Bot" ? "bot-msg" : "user-msg";
+                        return `<div class="${cls}"><strong>${msg.sender}:</strong> ${msg.text}</div>`;
+                    })
+                    .join("")}
+        </div>
+    `;
+        }
+
+        async function showArtifactDetails(sessionId, listItem) {
+            document.querySelectorAll(".recent-list li").forEach((li) => li.classList.remove("active"));
+            listItem.classList.add("active");
+
+            const details = await fetchArtifactDetails(sessionId);
+            const container = document.getElementById("chat-details");
+
+            const summary = details.summary || {};
+            const duration = formatDurationSeconds(
+                Math.floor((new Date(details.sessionEnd) - new Date(details.sessionStart)) / 1000)
+            );
+            const start = new Date(details.sessionStart).toLocaleString();
+            const end = new Date(details.sessionEnd).toLocaleString();
+
+            const transcriptMessages = parseTranscript(details.sessionTranscript || "");
+            const transcriptHtml = renderTranscript(transcriptMessages);
+
+            container.innerHTML = `
+        <h3>${summary.company || "Unknown Company"}</h3>
+        <p class="meta-line"><strong>Company:</strong> ${summary.company || "N/A"}</p>
+        <p><strong>Caller:</strong> ${summary.callerName || "N/A"} (${summary.callerNumber || "N/A"})</p>
+        <p><strong>Solution Type:</strong> ${summary.solutionType || "N/A"}</p>
+        <p><strong>Project Details:</strong><br>${summary.projectDetails || "N/A"}</p>
+        <p><strong>Additional Notes:</strong><br>${summary.additionalNotes || "None"}</p>
+        <p><strong>Duration:</strong> ${duration} &nbsp; | &nbsp; 
+           <strong>Started:</strong> ${start} &nbsp; | &nbsp; 
+           <strong>Ended:</strong> ${end}</p>
+        <p><strong>Tags:</strong> ${(summary.tags || [])
+                    .map((t) => `<span class="tag">${t}</span>`)
+                    .join(" ")}</p>
+        <hr>
+        <h4>Transcript</h4>
+        ${transcriptHtml}
+    `;
+        }
+
+        (async () => {
+            const artifacts = await fetchArtifacts();
+            renderArtifactList(artifacts);
+        })();
+    </script>
+
+
+</body>
+
+</html>

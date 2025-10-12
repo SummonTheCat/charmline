@@ -1,12 +1,12 @@
 // ----- Modules ----- //
 
-// Global Systems
 mod sys_resource;
-
-// Component Systems
+mod sys_console;
 mod sys_bot;
 mod sys_core;
 mod sys_session;
+mod sys_db;
+mod sys_dashboard;
 
 // ----- Imports ----- //
 

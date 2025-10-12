@@ -1,1 +1,4 @@
 /target
+/collects
+/builds
+*.lock

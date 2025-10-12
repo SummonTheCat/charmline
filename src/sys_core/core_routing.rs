@@ -3,10 +3,11 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::sys_bot::bot_handlers::handle_api_command;
+use crate::sys_console::handle_api_command;
 use crate::sys_core::core_responses::{response_not_found, response_ok};
+use crate::sys_dashboard::dashboard_handlers::{handle_dashboard_sessions_by_day, handle_dashboard_solutions, handle_dashboard_stats, handle_dashboard_tags, handle_dashboard_top_companies};
 use crate::sys_resource::CachedLoader;
-use crate::sys_session::session_routing::{handle_session_get, handle_session_sendinput, handle_session_start};
+use crate::sys_session::session_handlers::{handle_session_get, handle_session_get_artifact, handle_session_list_artifacts, handle_session_sendinput, handle_session_start};
 
 // ----- Structs ----- //
 
@@ -44,6 +45,13 @@ pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpR
         "/api/session/start" => handle_session_start(),
         "/api/session/get" => handle_session_get(body),
         "/api/session/sendinput" => handle_session_sendinput(body),
+        "/api/session/listartifacts" => handle_session_list_artifacts(body),
+        "/api/session/getartifact" => handle_session_get_artifact(body),
+        "/api/dashboard/stats" => handle_dashboard_stats(),
+        "/api/dashboard/top_companies" => handle_dashboard_top_companies(body),
+        "/api/dashboard/tags" => handle_dashboard_tags(),
+        "/api/dashboard/solutions" => handle_dashboard_solutions(),
+        "/api/dashboard/sessions_by_day" => handle_dashboard_sessions_by_day(body),
         _ => serve_static(path, loader),
     }
 }

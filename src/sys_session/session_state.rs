@@ -2,15 +2,8 @@
 
 use std::{
     collections::HashMap,
-    sync::{
-        Arc, 
-        Mutex, 
-        OnceLock
-    },
-    time::{
-        Duration, 
-        Instant
-    },
+    sync::{Arc, Mutex, OnceLock},
+    time::{Duration, Instant},
 };
 
 use uuid::Uuid;
@@ -49,6 +42,7 @@ impl SessionManager {
         let id = Uuid::new_v4().to_string();
         let session = Session {
             session_id: id.clone(),
+            session_start: Instant::now(),
             session_timeout: Instant::now() + Duration::from_secs(timeout_secs),
             session_chat: String::new(),
         };
@@ -86,6 +80,7 @@ impl SessionManager {
 #[derive(Clone, Debug)]
 pub struct Session {
     pub session_id: String,
+    pub session_start: Instant,
     pub session_timeout: Instant,
     pub session_chat: String,
 }
@@ -99,4 +94,39 @@ impl Session {
             0
         }
     }
+}
+
+// ----- Session Artifact Structures ----- //
+
+// A JSON Session Artifact at the end of a session
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct SessionArtifact {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    #[serde(rename = "sessionTranscript")]
+    pub session_transcript: String,
+    #[serde(rename = "sessionStart")]
+    pub session_start: String,
+    #[serde(rename = "sessionEnd")]
+    pub session_end: String,
+    #[serde(rename = "summary")]
+    pub summary: SessionSummary,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct SessionSummary {
+    #[serde(rename = "callerName")]
+    pub caller_name: String,
+    #[serde(rename = "callerNumber")]
+    pub caller_number: String,
+    #[serde(rename = "company")]
+    pub company: String,
+    #[serde(rename = "solutionType")]
+    pub solution_type: String,
+    #[serde(rename = "projectDetails")]
+    pub project_details: String,
+    #[serde(rename = "additionalNotes")]
+    pub additional_notes: String,
+    #[serde(rename = "tags")]
+    pub tags: Vec<String>, // New field for relevant tags
 }

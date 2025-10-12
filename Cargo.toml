@@ -9,3 +9,6 @@ serde_json = "1.0"
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 tokio = { version = "1.36", features = ["rt-multi-thread", "macros"] }
 uuid = { version = "1", features = ["v4"] }
+chrono = "0.4.42"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+regex = "1.12.1"
