@@ -3,7 +3,7 @@
 use rusqlite::{params, Connection, Result};
 use serde::Serialize;
 use std::collections::HashMap;
-use chrono::{DateTime, Utc, Duration};
+use chrono::DateTime;
 
 // ----- Structs for Returned Data ----- //
 
@@ -87,9 +87,6 @@ pub fn get_session_stats(conn: &Connection) -> Result<SessionStats> {
     };
 
     // Compute sessions by date ranges
-    let now = Utc::now();
-    let today_start = now.date_naive();
-    let week_start = today_start - Duration::days(7);
 
     let sessions_today = conn.query_row(
         r#"
