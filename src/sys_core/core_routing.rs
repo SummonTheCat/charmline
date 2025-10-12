@@ -5,9 +5,15 @@ use std::sync::Arc;
 
 use crate::sys_console::handle_api_command;
 use crate::sys_core::core_responses::{response_not_found, response_ok};
-use crate::sys_dashboard::dashboard_handlers::{handle_dashboard_sessions_by_day, handle_dashboard_solutions, handle_dashboard_stats, handle_dashboard_tags, handle_dashboard_top_companies};
+use crate::sys_dashboard::dashboard_handlers::{
+    handle_dashboard_sessions_by_day, handle_dashboard_solutions, handle_dashboard_stats,
+    handle_dashboard_tags, handle_dashboard_top_companies,
+};
 use crate::sys_resource::CachedLoader;
-use crate::sys_session::session_handlers::{handle_session_get, handle_session_get_artifact, handle_session_list_artifacts, handle_session_sendinput, handle_session_start};
+use crate::sys_session::session_handlers::{
+    handle_session_get, handle_session_get_artifact, handle_session_list_artifacts,
+    handle_session_sendinput, handle_session_start,
+};
 
 // ----- Structs ----- //
 
@@ -64,18 +70,35 @@ fn serve_static(path: &str, loader: &Arc<CachedLoader>) -> HttpResponse {
         return response_not_found("Invalid path");
     }
 
+    // Detect if this is likely a direct file request or a page alias
     let content_type = content_type_for(path);
 
-    match loader.load(path) {
-        Some(file) => response_ok(content_type, file.bytes),
-        None => response_not_found("File not found"),
+    // Try direct load first
+    if let Some(file) = loader.load(path) {
+        return response_ok(content_type, file.bytes);
     }
+
+    // If not found and it doesn't have a file extension, try /pages/{path}.html
+    if !path.contains('.') {
+        let html_path = format!("pages/{}.html", path);
+        let content_type = "text/html; charset=utf-8";
+
+        if let Some(file) = loader.load(&html_path) {
+            return response_ok(content_type, file.bytes);
+        }
+    }
+
+    response_not_found("File not found")
 }
 
 // ----- Helpers ----- //
 
 fn content_type_for(path: &str) -> &'static str {
-    match Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or("") {
+    match Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+    {
         "html" => "text/html; charset=utf-8",
         "css" => "text/css; charset=utf-8",
         "js" => "application/javascript; charset=utf-8",

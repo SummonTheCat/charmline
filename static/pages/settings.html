@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Charmline | Settings</title>
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,50 +14,6 @@
         rel="stylesheet" />
 
     <style>
-        .settings-panel {
-            margin: 3rem auto;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            width: 80%;
-            max-width: 850px;
-            padding: 1.8rem 2.2rem;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1.5rem;
-        }
-
-        .tab {
-            padding: 0.7rem 1.2rem;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--muted);
-            transition: color 0.2s ease;
-        }
-
-        .tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .tab:hover {
-            color: #fff;
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
         .setting-group {
             margin-bottom: 1rem;
         }
@@ -136,14 +92,14 @@
         <h1>Charmline</h1>
         <nav>
             <a href="/">Dashboard</a>
-            <a href="logs.html">Logs</a>
-            <a href="chat.html">Chat</a>
-            <a href="settings.html" class="active">Settings</a>
+            <a href="logs">Logs</a>
+            <a href="chat">Chat</a>
+            <a href="settings" class="active">Settings</a>
         </nav>
     </header>
 
     <main>
-        <section class="settings-panel">
+        <section class="tabbed-panel">
             <div class="tabs">
                 <div class="tab active" data-tab="user-style">User Style</div>
                 <div class="tab" data-tab="bot">Bot</div>
@@ -228,7 +184,7 @@
         Charmline © 2025
     </footer>
 
-    <script src="styleManager.js"></script>
+    <script src="scripts/styleManager.js"></script>
     <script>
         // Tabs
         document.querySelectorAll('.tab').forEach(tab => {

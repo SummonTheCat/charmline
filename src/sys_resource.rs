@@ -43,6 +43,7 @@ impl CachedLoader {
         }
 
         let path = self.root_dir.join(filename);
+        let path = PathBuf::from(self.clean_path(path.to_str().unwrap_or("")));
 
         match fs::read(&path) {
             Ok(bytes) => {
@@ -56,6 +57,16 @@ impl CachedLoader {
             }
             Err(_) => None,
         }
+    }
+
+    fn clean_path(&self, path: &str) -> String {
+        let mut cleaned = path.replace("..", "");
+        if cleaned.starts_with('/') {
+            cleaned.remove(0);
+        }
+        // Replace backslashes with forward slashes for cross-platform compatibility
+        cleaned = cleaned.replace('\\', "/");
+        cleaned
     }
 }
 
