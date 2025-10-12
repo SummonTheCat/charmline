@@ -7,12 +7,26 @@
     --bg: #0d0e14;
     --panel: #05060c;
     --accent: #4da3ff;
+    --accent-hover: #3390ff;
+    --accent-variant: #1a73e8;
+    --accent-variant-hover: #1669c7;
     --border: #242424;
     --text: #eee;
     --muted: #999;
     --radius: 10px;
-
     --scroll-thumb: #333;
+}
+
+/* ----- Base Overrides ----- */
+
+/* --- Headings --- */
+h2 {
+    font-family: "Outfit", sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: 0.3px;
 }
 
 /* ----- Base Layout ----- */
@@ -26,6 +40,54 @@ body {
     flex-direction: column;
     min-height: 100vh;
     overflow-x: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.8rem;
+    border: 1px solid var(--border);
+    background: #0e1016;
+}
+
+th,
+td {
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+th {
+    color: var(--accent);
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #11131a;
+}
+
+td {
+    color: #ddd;
+    font-size: 0.88rem;
+}
+
+tr:hover td {
+    background: #171a22;
+}
+
+button {
+    background: var(--accent-variant);
+    border: none;
+    padding: 0.6rem 1.4rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.3s ease, transform 0.15s ease;
+    font-family: "Outfit", sans-serif;
+}
+
+button:hover {
+    background: var(--accent-variant-hover);
+    transform: translateY(-1px);
 }
 
 /* ----- Header ----- */
@@ -88,7 +150,110 @@ footer {
     right: 0;
 }
 
-/* ----- Scrollbars & Animations ----- */
+/* ----- Main Content Area ----- */
+
+main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    flex-wrap: wrap;
+
+    animation: fadeIn 0.3s ease;
+}
+
+.main-item {
+    width: 100%;
+}
+
+.lone-panel {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: var(--panel);
+    color: var(--text);
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+}
+
+/* --- Panel Containers --- */
+.left-panel,
+.right-panel {
+    height: calc(100vh - 120px);
+    /* Header + footer space */
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.left-panel {
+    width: 35%;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    flex: 1;
+    background: #0f1018;
+    padding: 1.5rem 2rem;
+}
+
+
+/* ----- Stat Grid ----- */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: #101218;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    color: #eee;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    background: #151821;
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 2rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.stat-card p {
+    margin: 0.3rem 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* ----- Chart Containers ----- */
+.chart-container {
+    background: #101218;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    color: var(--text);
+    margin-bottom: 2rem;
+}
+
+.chart-canvas {
+    width: 100%;
+    height: 300px;
+}
+
+/* ----- Scrollbars ----- */
 
 ::-webkit-scrollbar {
     width: 6px;
@@ -99,13 +264,41 @@ footer {
     border-radius: 3px;
 }
 
+/* ----- Animations ----- */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ----- Layout Adjustments ----- */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+.space-sml {
+    margin-top: 0.5rem;
+}
+
+.space-med {
+    margin-top: 1rem;
+}
+
+.space-larger {
+    margin-top: 2rem;
 }

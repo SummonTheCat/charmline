@@ -17,9 +17,9 @@ async function loadDashboard() {
     ]);
 
     renderStats(stats);
-    renderTable("companies-table", companies, "company", "session_count");
-    renderTable("tags-table", tags, "tag", "count");
-    renderTable("solutions-table", solutions, "solution_type", "count");
+    renderTable("companies-table", companies, "company", "session_count", 5);
+    renderTable("tags-table", tags, "tag", "count", 5);
+    renderTable("solutions-table", solutions, "solution_type", "count", 5);
     renderSessionsChart(sessionsByDay.sessions_by_day || []);
 }
 
@@ -36,9 +36,13 @@ function renderStats(stats) {
         : "—";
 }
 
-function renderTable(id, rows, colA, colB) {
+function renderTable(id, rows, colA, colB, maxItems = 5) {
     const table = document.getElementById(id).querySelector("tbody");
     table.innerHTML = "";
+
+    if (rows.length > maxItems) {
+        rows = rows.slice(0, maxItems);
+    }
 
     if (!rows || !rows.length) {
         table.innerHTML = "<tr><td colspan='2'>No data</td></tr>";
@@ -55,6 +59,23 @@ function renderSessionsChart(data) {
     const labels = data.map(d => d[0]);
     const values = data.map(d => d[1]);
 
+    // Get accent color from CSS variable
+    const accentColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent')
+        .trim() || '#4da3ff';
+
+    // Convert HEX → RGBA with adjustable alpha (to darken/mute the fill)
+    function hexToRgba(hex, alpha = 0.15) {
+        let c = hex.replace('#', '');
+        if (c.length === 3) c = c.split('').map(x => x + x).join('');
+        const r = parseInt(c.slice(0, 2), 16);
+        const g = parseInt(c.slice(2, 4), 16);
+        const b = parseInt(c.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    const backgroundColor = hexToRgba(accentColor, 0.15); // 15% opacity fill
+
     new Chart(ctx, {
         type: "line",
         data: {
@@ -63,19 +84,32 @@ function renderSessionsChart(data) {
                 label: "Sessions",
                 data: values,
                 fill: true,
-                borderColor: "#4da3ff",
-                backgroundColor: "rgba(77,163,255,0.15)",
-                tension: 0.3
+                borderColor: accentColor,
+                backgroundColor: backgroundColor,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: accentColor,
+                pointHoverRadius: 5
             }]
         },
         options: {
             scales: {
-                x: { ticks: { color: "#aaa" }, grid: { color: "#222" } },
-                y: { ticks: { color: "#aaa" }, grid: { color: "#222" } }
+                x: {
+                    ticks: { color: "#aaa" },
+                    grid: { color: "#222" }
+                },
+                y: {
+                    ticks: { color: "#aaa" },
+                    grid: { color: "#222" }
+                }
             },
-            plugins: { legend: { display: false } }
+            plugins: {
+                legend: { display: false }
+            }
         }
     });
 }
+
 
 loadDashboard();

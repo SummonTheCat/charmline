@@ -8,7 +8,6 @@
 
     <!-- Shared Charmline Core Theme -->
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="tempindex.css" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -34,58 +33,79 @@
     </header>
 
     <main>
-        <h2>System Overview</h2>
-        <div class="stats-grid" id="stats-grid">
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>Total Sessions</p>
+        <section class="lone-panel">
+            <div class="main-item">
+                <h2>System Overview</h2>
+                <div class="stats-grid " id="stats-grid">
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>Total Sessions</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>Active Today</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>This Week</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>Unique Companies</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>Unique Callers</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>—</h3>
+                        <p>Avg Duration</p>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>Active Today</p>
-            </div>
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>This Week</p>
-            </div>
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>Unique Companies</p>
-            </div>
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>Unique Callers</p>
-            </div>
-            <div class="stat-card">
-                <h3>—</h3>
-                <p>Avg Duration</p>
-            </div>
-        </div>
+            <div class="main-item space-larger"></div>
+            <div class="main-item two-col">
+                <div>
+                    <h2>Top Companies</h2>
+                    <table id="companies-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Sessions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="2">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <div class="two-col">
-            <div>
-                <h2>Top Companies</h2>
-                <table id="companies-table">
+                <div>
+                    <h2>Top Tags</h2>
+                    <table id="tags-table">
+                        <thead>
+                            <tr>
+                                <th>Tag</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="2">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="main-item space-larger"></div>
+            <div class="main-item">
+                <h2>Solution Type Frequency</h2>
+                <table id="solutions-table">
                     <thead>
                         <tr>
-                            <th>Company</th>
-                            <th>Sessions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div>
-                <h2>Top Tags</h2>
-                <table id="tags-table">
-                    <thead>
-                        <tr>
-                            <th>Tag</th>
+                            <th>Solution Type</th>
                             <th>Count</th>
                         </tr>
                     </thead>
@@ -96,31 +116,12 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div>
-            <h2>Solution Type Frequency</h2>
-            <table id="solutions-table">
-                <thead>
-                    <tr>
-                        <th>Solution Type</th>
-                        <th>Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="2">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="space-larger"></div>
-
-        <div class="chart-container">
-            <h2>Sessions Over Time (Last 7 Days)</h2>
-            <canvas id="sessionsChart"></canvas>
-        </div>
+            <div class="main-item space-larger"></div>
+            <div class="main-item chart-container">
+                <h2>Sessions Over Time (Last 7 Days)</h2>
+                <canvas class="chart-canvas" id="sessionsChart"></canvas>
+            </div>
+        </section>
 
 
     </main>
@@ -128,6 +129,8 @@
     <footer>
         Charmline © 2025
     </footer>
+
+    <script src="styleManager.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="dashboard.js"></script>
