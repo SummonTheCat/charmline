@@ -13,7 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@200..800&family=Outfit:wght@100..900&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="style/style.css" />
-    <link rel="stylesheet" href="style/style_chat.css" />
+    <link rel="stylesheet" href="style/style_preview.css" />
 </head>
 
 <body>
@@ -22,7 +22,7 @@
         <nav>
             <a href="/">Dashboard</a>
             <a href="logs">Logs</a>
-            <a href="chat" class="active">Chat</a>
+            <a href="preview" class="active">Preview</a>
             <a href="settings">Settings</a>
         </nav>
     </header>
@@ -32,8 +32,8 @@
             <p>Loading session...</p>
         </div>
 
-        <div id="chat-ui">
-            <div id="chat-log"></div>
+        <div id="preview-ui">
+            <div id="preview-log"></div>
             <div id="voice-controls">
                 <a id="mic-btn" onclick="toggleMic()">
                     <img src="graphics/icon-mic.png" alt="Mic">
@@ -50,7 +50,7 @@
 
     <script src="scripts/styleManager.js"></script>
 
-    <script src="scripts/chat.js"></script>
+    <script src="scripts/preview.js"></script>
 </body>
 
 </html>

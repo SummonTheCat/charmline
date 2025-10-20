@@ -42,7 +42,10 @@ impl HttpResponse {
 // ----- Routing ----- //
 
 pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpResponse {
-    match path {
+    // Strip query parameters (anything after '?')
+    let clean_path = path.split('?').next().unwrap_or("/");
+
+    match clean_path {
         "/" => match loader.load("index.html") {
             Some(file) => response_ok("text/html", file.bytes),
             None => response_not_found("index.html not found"),
@@ -58,27 +61,27 @@ pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpR
         "/api/dashboard/tags" => handle_dashboard_tags(),
         "/api/dashboard/solutions" => handle_dashboard_solutions(),
         "/api/dashboard/sessions_by_day" => handle_dashboard_sessions_by_day(body),
-        _ => serve_static(path, loader),
+        _ => serve_static(clean_path, loader),
     }
 }
 
 // Serve static files (html, css, js, images, etc.)
 fn serve_static(path: &str, loader: &Arc<CachedLoader>) -> HttpResponse {
-    let path = path.trim_start_matches('/');
+    // Strip query params again for safety in direct calls
+    let path = path.split('?').next().unwrap_or("").trim_start_matches('/');
 
     if path.contains("..") {
         return response_not_found("Invalid path");
     }
 
-    // Detect if this is likely a direct file request or a page alias
     let content_type = content_type_for(path);
 
-    // Try direct load first
+    // Try direct file first
     if let Some(file) = loader.load(path) {
         return response_ok(content_type, file.bytes);
     }
 
-    // If not found and it doesn't have a file extension, try /pages/{path}.html
+    // Fallback: /pages/{path}.html if no extension present
     if !path.contains('.') {
         let html_path = format!("pages/{}.html", path);
         let content_type = "text/html; charset=utf-8";

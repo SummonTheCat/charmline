@@ -161,8 +161,6 @@ main {
     background: var(--bg);
     color: var(--text);
     flex-wrap: wrap;
-
-    
 }
 
 .main-item {
@@ -186,13 +184,14 @@ main {
     /* Header + footer space */
     overflow-y: auto;
     scrollbar-width: thin;
+
+    padding: 0 1.5rem;
 }
 
 .left-panel {
     width: 35%;
     background: var(--panel);
     border-right: 1px solid var(--border);
-    padding: 1.5rem 1.8rem;
     display: flex;
     flex-direction: column;
 }
@@ -200,7 +199,6 @@ main {
 .right-panel {
     flex: 1;
     background: #0f1018;
-    padding: 1.5rem 2rem;
 }
 
 /* ----- Tabbed Navigation ----- */
@@ -347,4 +345,62 @@ main {
 
 .space-larger {
     margin-top: 2rem;
+}
+
+
+/* =========================================
+   MEDIA QUERIES
+   Adjustments for smaller screens
+    ========================================= */
+/* ----- Responsive Adjustments (Small Screens) ----- */
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    nav a {
+        width: auto;
+        padding: 0.3rem 0.8rem;
+    }
+
+    .lone-panel {
+        padding: 0.8rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .stat-card {
+        align-items: center;
+        text-align: center;
+    }
+
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+
+    table {
+        font-size: 0.85rem;
+    }
+
+    th,
+    td {
+        padding: 0.6rem 0.7rem;
+        word-break: break-word;
+    }
+
+    .chart-container {
+        padding: 0.8rem;
+        text-align: center;
+    }
 }

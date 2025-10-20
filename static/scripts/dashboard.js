@@ -7,6 +7,18 @@ async function fetchJson(url, body = {}) {
     return res.json();
 }
 
+// Utility: Sort array of objects by numeric value desc, then key asc
+function sortByKeynameAndValue(arr, keyName, valueName) {
+    return arr.sort((a, b) => {
+        const valDiff = (b[valueName] ?? 0) - (a[valueName] ?? 0);
+        if (valDiff !== 0) return valDiff;
+
+        const aKey = (a[keyName] || "").toString().toLowerCase();
+        const bKey = (b[keyName] || "").toString().toLowerCase();
+        return aKey.localeCompare(bKey);
+    });
+}
+
 async function loadDashboard() {
     const [stats, companies, tags, solutions, sessionsByDay] = await Promise.all([
         fetchJson("/api/dashboard/stats"),
@@ -16,10 +28,15 @@ async function loadDashboard() {
         fetchJson("/api/dashboard/sessions_by_day", { days: 7 })
     ]);
 
+    // Apply sorting
+    const sortedCompanies = sortByKeynameAndValue(companies, "company", "session_count");
+    const sortedTags = sortByKeynameAndValue(tags, "tag", "count");
+    const sortedSolutions = sortByKeynameAndValue(solutions, "solution_type", "count");
+
     renderStats(stats);
-    renderTable("companies-table", companies, "company", "session_count", 5);
-    renderTable("tags-table", tags, "tag", "count", 5);
-    renderTable("solutions-table", solutions, "solution_type", "count", 5);
+    renderTable("companies-table", sortedCompanies, "company", "session_count", 5);
+    renderTable("tags-table", sortedTags, "tag", "count", 5);
+    renderTable("solutions-table", sortedSolutions, "solution_type", "count", 5);
     renderSessionsChart(sessionsByDay.sessions_by_day || []);
 }
 
@@ -74,7 +91,7 @@ function renderSessionsChart(data) {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    const backgroundColor = hexToRgba(accentColor, 0.15); // 15% opacity fill
+    const backgroundColor = hexToRgba(accentColor, 0.15);
 
     new Chart(ctx, {
         type: "line",
@@ -110,6 +127,5 @@ function renderSessionsChart(data) {
         }
     });
 }
-
 
 loadDashboard();
