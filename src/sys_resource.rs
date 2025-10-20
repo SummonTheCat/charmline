@@ -7,7 +7,6 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-
 // ----- Structures ----- //
 
 #[derive(Clone)]
@@ -25,8 +24,6 @@ pub struct CachedLoader {
 impl CachedLoader {
     // Initialize a new CachedLoader with a specified base directory
     pub fn new(base_dir: impl AsRef<Path>) -> Self {
-        
-
         let exe_path = env::current_exe().expect("Failed to get current executable path");
         let exe_dir = exe_path
             .parent()
@@ -49,14 +46,26 @@ impl CachedLoader {
     // Load a file from the cache or filesystem
     pub fn load(&self, filename: &str) -> Option<CachedFile> {
         if let Some(cached) = self.cache.lock().unwrap().get(filename).cloned() {
+            println!("[CachedLoader::load] Cache hit: {}", filename);
             return Some(cached);
         }
 
-        let path = self.root_dir.join(filename);
-        let path = PathBuf::from(self.clean_path(path.to_str().unwrap_or("")));
+        let joined = self.root_dir.join(filename);
+        let cleaned = self.clean_path(joined.to_str().unwrap_or(""));
+        let path = PathBuf::from(&cleaned);
 
-        match fs::read(&path) {
+        println!(
+            "[CachedLoader::load] Trying to read file:\n  root_dir = {}\n  filename = {}\n  joined = {}\n  cleaned = {}\n  final = {}",
+            self.root_dir.display(),
+            filename,
+            joined.display(),
+            cleaned,
+            path.display()
+        );
+
+        match std::fs::read(&path) {
             Ok(bytes) => {
+                println!("[CachedLoader::load] Successfully read: {}", path.display());
                 let cached_file = CachedFile {
                     bytes: bytes.clone(),
                 };
@@ -64,10 +73,17 @@ impl CachedLoader {
                     .lock()
                     .unwrap()
                     .insert(filename.to_string(), cached_file.clone());
-                println!("Cached file: {:?}", path);
+                println!("[CachedLoader::load] Cached file: {}", path.display());
                 Some(cached_file)
             }
-            Err(_) => None,
+            Err(e) => {
+                println!(
+                    "[CachedLoader::load] Failed to read {}: {}",
+                    path.display(),
+                    e
+                );
+                None
+            }
         }
     }
 
