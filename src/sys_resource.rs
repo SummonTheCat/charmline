@@ -63,7 +63,7 @@ impl CachedLoader {
                     .insert(filename.to_string(), cached_file.clone());
                 Some(cached_file)
             }
-            Err(e) => {
+            Err(_e) => {
                 None
             }
         }

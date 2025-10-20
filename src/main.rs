@@ -24,7 +24,10 @@ fn main() {
         }
     });
 
-    let address = "127.0.0.1:8080";
-    let server = Server::new(address, "static");
+    // Get the port from the config
+    let port = crate::sys_core::core_config::get_config().port;
+
+    let address = format!("127.0.0.1:{}", port);
+    let server = Server::new(&address, "static");
     server.run();
 }
