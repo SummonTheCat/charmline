@@ -21,19 +21,6 @@ def section(title: str):
     print(f"{BOLD}{CYAN}>>> {title}{RESET}")
     print(f"{BOLD}{MAGENTA}{'=' * 60}{RESET}")
 
-def ensure_permissions(path: Path):
-    """Ensure readable/executable permissions for server on Linux."""
-    if os.name != "nt":  # Only needed on Linux/macOS
-        try:
-            for root, dirs, files in os.walk(path):
-                for d in dirs:
-                    os.chmod(Path(root) / d, 0o755)
-                for f in files:
-                    os.chmod(Path(root) / f, 0o644)
-            print(f"{GREEN}✓ Ensured permissions for {path}{RESET}")
-        except Exception as e:
-            print(f"{YELLOW}⚠ Warning: Failed to adjust permissions: {e}{RESET}")
-
 def build_and_run(project_dir: str, output_dir: str):
     project_dir = Path(project_dir).resolve()
     output_dir = Path(output_dir).resolve()
@@ -78,10 +65,7 @@ def build_and_run(project_dir: str, output_dir: str):
     section("Copying Build Artifacts")
     dest_exe = output_dir / build_path.name
     shutil.copy2(build_path, dest_exe)
-    if os.name != "nt":
-        dest_exe.chmod(0o755)
     print(f"{GREEN}✓ Copied executable → {dest_exe}{RESET}")
-
 
     static_dir = project_dir / "static"
     if static_dir.exists():
@@ -90,7 +74,6 @@ def build_and_run(project_dir: str, output_dir: str):
             shutil.rmtree(dest_static)
         shutil.copytree(static_dir, dest_static)
         print(f"{GREEN}✓ Copied static files → {dest_static}{RESET}")
-        ensure_permissions(dest_static)
     else:
         print(f"{YELLOW}⚠ No static directory found, skipping static assets.{RESET}")
 
@@ -101,11 +84,8 @@ def build_and_run(project_dir: str, output_dir: str):
             shutil.rmtree(dest_cfg)
         shutil.copytree(cfg_dir, dest_cfg)
         print(f"{GREEN}✓ Copied config files → {dest_cfg}{RESET}")
-        ensure_permissions(dest_cfg)
     else:
         print(f"{YELLOW}⚠ No cfg directory found, skipping config files.{RESET}")
-
-    ensure_permissions(output_dir)
     print(f"{GREEN}✓ Build artifacts prepared in {output_dir}{RESET}")
 
     section("Build Complete")
@@ -116,6 +96,7 @@ def build_and_run(project_dir: str, output_dir: str):
     section("Running Charmline Server")
     print(f"{CYAN}→ Starting server... Press Ctrl+C to stop.{RESET}")
 
+    # Run server with graceful Ctrl+C support
     try:
         process = subprocess.Popen(
             [str(dest_exe)],
@@ -128,6 +109,7 @@ def build_and_run(project_dir: str, output_dir: str):
         print(f"\n{YELLOW}⚠ KeyboardInterrupt received — shutting down Charmline...{RESET}")
         if process.poll() is None:
             try:
+                # On Windows terminate is needed; on Unix send SIGINT
                 if os.name == "nt":
                     process.terminate()
                 else:
