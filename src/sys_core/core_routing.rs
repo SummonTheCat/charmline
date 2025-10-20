@@ -66,7 +66,6 @@ pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpR
 }
 
 fn serve_static(path: &str, loader: &Arc<CachedLoader>) -> HttpResponse {
-    use std::path::PathBuf;
 
     // Strip query params again for safety in direct calls
     let path = path.split('?').next().unwrap_or("").trim_start_matches('/');

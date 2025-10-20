@@ -2,17 +2,17 @@
 
 use std::{
     collections::HashMap,
-    env,
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
+
 
 // ----- Structures ----- //
 
 #[derive(Clone)]
 pub struct CachedFile {
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
 
 pub struct CachedLoader {
@@ -23,12 +23,22 @@ pub struct CachedLoader {
 // ----- Implementations ----- //
 
 impl CachedLoader {
-
     // Initialize a new CachedLoader with a specified base directory
     pub fn new(base_dir: impl AsRef<Path>) -> Self {
+        
+
         let exe_path = env::current_exe().expect("Failed to get current executable path");
-        let exe_dir = exe_path.parent().expect("Executable should have a parent directory");
+        let exe_dir = exe_path
+            .parent()
+            .expect("Executable should have a parent directory");
         let root_dir = exe_dir.join(base_dir.as_ref());
+
+        println!(
+            "[CachedLoader] Executable dir: {}\n[CachedLoader] Base dir argument: {}\n[CachedLoader] Resolved root_dir: {}",
+            exe_dir.display(),
+            base_dir.as_ref().display(),
+            root_dir.display()
+        );
 
         Self {
             cache: Arc::new(Mutex::new(HashMap::new())),
@@ -47,7 +57,9 @@ impl CachedLoader {
 
         match fs::read(&path) {
             Ok(bytes) => {
-                let cached_file = CachedFile { bytes: bytes.clone() };
+                let cached_file = CachedFile {
+                    bytes: bytes.clone(),
+                };
                 self.cache
                     .lock()
                     .unwrap()
@@ -69,4 +81,3 @@ impl CachedLoader {
         cleaned
     }
 }
-
