@@ -37,9 +37,16 @@ sudo mkdir -p "$INSTALL_DIR"
 sudo cp "$BUILD_EXE" "$BINARY_PATH"
 sudo chmod +x "$BINARY_PATH"
 
+# Copy static and cfg directories
 for dir in static cfg; do
-    if [ -d "$CARGO_ROOT/$dir" ]; then
-        sudo cp -r "$CARGO_ROOT/$dir" "$INSTALL_DIR/"
+    SRC_DIR="$CARGO_ROOT/$dir"
+    DEST_DIR="$INSTALL_DIR/$dir"
+    if [ -d "$SRC_DIR" ]; then
+        sudo mkdir -p "$DEST_DIR"
+        sudo rsync -a --delete "$SRC_DIR"/ "$DEST_DIR"/
+        echo "Copied $dir/ → $DEST_DIR"
+    else
+        echo "No $dir directory found, skipping."
     fi
 done
 
@@ -69,3 +76,13 @@ sudo systemctl restart "$CRATE_NAME.service"
 
 echo "Service installed and running."
 sudo systemctl status "$CRATE_NAME.service" --no-pager
+
+# Verification: list installed files
+echo
+echo "Verifying installation contents:"
+echo "--------------------------------"
+sudo ls -R "$INSTALL_DIR"
+
+echo
+echo "Installation complete for $CRATE_NAME."
+echo "Binary: $BINARY_PATH"
