@@ -78,7 +78,10 @@ def build_and_run(project_dir: str, output_dir: str):
     section("Copying Build Artifacts")
     dest_exe = output_dir / build_path.name
     shutil.copy2(build_path, dest_exe)
+    if os.name != "nt":
+        dest_exe.chmod(0o755)
     print(f"{GREEN}✓ Copied executable → {dest_exe}{RESET}")
+
 
     static_dir = project_dir / "static"
     if static_dir.exists():
