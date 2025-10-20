@@ -2,7 +2,7 @@
 
 use std::{
     collections::HashMap,
-    env, fs,
+    env,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
@@ -50,18 +50,9 @@ impl CachedLoader {
             return Some(cached);
         }
 
-        let joined = self.root_dir.join(filename);
-        let cleaned = self.clean_path(joined.to_str().unwrap_or(""));
-        let path = PathBuf::from(&cleaned);
-
-        println!(
-            "[CachedLoader::load] Trying to read file:\n  root_dir = {}\n  filename = {}\n  joined = {}\n  cleaned = {}\n  final = {}",
-            self.root_dir.display(),
-            filename,
-            joined.display(),
-            cleaned,
-            path.display()
-        );
+        // Directly join the root_dir with the filename — no cleaning needed
+        let path = self.root_dir.join(filename);
+        println!("[CachedLoader::load] Reading file: {}", path.display());
 
         match std::fs::read(&path) {
             Ok(bytes) => {
@@ -73,7 +64,6 @@ impl CachedLoader {
                     .lock()
                     .unwrap()
                     .insert(filename.to_string(), cached_file.clone());
-                println!("[CachedLoader::load] Cached file: {}", path.display());
                 Some(cached_file)
             }
             Err(e) => {
@@ -85,15 +75,5 @@ impl CachedLoader {
                 None
             }
         }
-    }
-
-    fn clean_path(&self, path: &str) -> String {
-        let mut cleaned = path.replace("..", "");
-        if cleaned.starts_with('/') {
-            cleaned.remove(0);
-        }
-        // Replace backslashes with forward slashes for cross-platform compatibility
-        cleaned = cleaned.replace('\\', "/");
-        cleaned
     }
 }
