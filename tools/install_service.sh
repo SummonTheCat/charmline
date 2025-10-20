@@ -1,7 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-# Determine paths
+# --- Parse Args --- #
+BOT_KEY=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -k|--key)
+            BOT_KEY="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 --key <CHARMLINE_BOT_KEY>"
+            exit 1
+            ;;
+    esac
+done
+
+if [ -z "$BOT_KEY" ]; then
+    echo "Error: Missing required --key argument (CHARMLINE_BOT_KEY)."
+    echo "Usage: $0 --key <CHARMLINE_BOT_KEY>"
+    exit 1
+fi
+
+# --- Determine paths --- #
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CARGO_ROOT="$(realpath "$SCRIPT_DIR/..")"
 
@@ -64,6 +86,7 @@ Restart=always
 RestartSec=5
 User=$(whoami)
 Environment=RUST_LOG=info
+Environment=CHARMLINE_BOT_KEY=$BOT_KEY
 
 [Install]
 WantedBy=multi-user.target
