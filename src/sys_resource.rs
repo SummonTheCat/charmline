@@ -17,7 +17,7 @@ pub struct CachedFile {
 
 pub struct CachedLoader {
     cache: Arc<Mutex<HashMap<String, CachedFile>>>,
-    root_dir: PathBuf,
+    pub root_dir: PathBuf,
 }
 
 // ----- Implementations ----- //
