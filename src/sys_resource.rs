@@ -46,17 +46,14 @@ impl CachedLoader {
     // Load a file from the cache or filesystem
     pub fn load(&self, filename: &str) -> Option<CachedFile> {
         if let Some(cached) = self.cache.lock().unwrap().get(filename).cloned() {
-            println!("[CachedLoader::load] Cache hit: {}", filename);
             return Some(cached);
         }
 
         // Directly join the root_dir with the filename — no cleaning needed
         let path = self.root_dir.join(filename);
-        println!("[CachedLoader::load] Reading file: {}", path.display());
 
         match std::fs::read(&path) {
             Ok(bytes) => {
-                println!("[CachedLoader::load] Successfully read: {}", path.display());
                 let cached_file = CachedFile {
                     bytes: bytes.clone(),
                 };
@@ -67,11 +64,6 @@ impl CachedLoader {
                 Some(cached_file)
             }
             Err(e) => {
-                println!(
-                    "[CachedLoader::load] Failed to read {}: {}",
-                    path.display(),
-                    e
-                );
                 None
             }
         }

@@ -55,16 +55,24 @@ function showStartButton() {
 }
 
 function showSessionInfo(data) {
+    // hide session panel
     document.getElementById("session-panel").style.display = "none";
-    const chatUI = document.getElementById("chat-ui");
-    chatUI.style.display = "flex";
-    chatLog.textContent = "";
+
+    // show the preview UI container
+    const previewUI = document.getElementById("preview-ui");
+    previewUI.style.display = "flex";
+
+    // clear previous logs
+    const previewLog = document.getElementById("preview-log");
+    previewLog.textContent = "";
+
     if (data.chat) appendMessage("bot", data.chat);
+
     // Read the initial bot message aloud
     if (data.chat) speakText(data.chat);
 }
 
-const chatLog = document.getElementById("chat-log");
+const previewLog = document.getElementById("preview-log");
 const micBtn = document.getElementById("mic-btn");
 const voicePreview = document.getElementById("voice-preview");
 const statusIndicator = document.getElementById("status-indicator");
@@ -73,16 +81,16 @@ function appendMessage(role, text) {
     const bubble = document.createElement("div");
     bubble.className = role === "user" ? "user-msg" : "bot-msg";
     bubble.textContent = text.trim();
-    chatLog.appendChild(bubble);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    previewLog.appendChild(bubble);
+    previewLog.scrollTop = previewLog.scrollHeight;
 }
 
 function showBotTyping() {
     const bubble = document.createElement("div");
     bubble.className = "bot-msg typing";
     bubble.textContent = "⋯";
-    chatLog.appendChild(bubble);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    previewLog.appendChild(bubble);
+    previewLog.scrollTop = previewLog.scrollHeight;
     return bubble;
 }
 
@@ -122,7 +130,6 @@ async function sendInput(text) {
     voicePreview.textContent = "Waiting for voice...";
 }
 
-
 function handleSessionEnd(finalText) {
     deleteCookie("session_id");
     micBtn.classList.remove("listening", "sent");
@@ -144,8 +151,6 @@ function handleSessionEnd(finalText) {
         });
     });
 }
-
-
 
 window.debugSend = sendInput;
 
@@ -267,20 +272,13 @@ function flashSentState() {
 }
 
 // --- Client-side Text-to-Speech (TTS) ---
-// --- Client-side Text-to-Speech (TTS) Configuration ---
 let ttsEnabled = true;
-
-// 🔧 Easily Adjustable TTS Settings
 let ttsConfig = {
-    rate: 1.2,           // 1.0 = normal speed (range: 0.5–2.0)
-    pitch: 0.9,          // 1.0 = normal tone (range: 0.5–2.0)
-    volume: 1.0,         // 1.0 = full volume (range: 0–1)
-    preferredAccents: ["en-GB", "en-ZA", "en-US"], // priority order
+    rate: 1.2,
+    pitch: 0.9,
+    volume: 1.0,
+    preferredAccents: ["en-GB", "en-ZA", "en-US"],
 };
-
-// Example of updating settings live:
-// ttsConfig.rate = 1.2;
-// ttsConfig.preferredAccents = ["en-GB", "en-US"];
 
 function toggleTTS() {
     ttsEnabled = !ttsEnabled;
@@ -298,14 +296,12 @@ function speakText(text, onEndCallback) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
 
-    utterance.lang = ttsConfig.preferredAccents[0]; // fallback to first
+    utterance.lang = ttsConfig.preferredAccents[0];
     utterance.rate = ttsConfig.rate;
     utterance.pitch = ttsConfig.pitch;
     utterance.volume = ttsConfig.volume;
 
     const voices = window.speechSynthesis.getVoices();
-
-    // Select the best matching accent
     const preferred = ttsConfig.preferredAccents
         .map(code => voices.find(v => v.lang.startsWith(code)))
         .find(Boolean);
@@ -320,8 +316,6 @@ function speakText(text, onEndCallback) {
     utterance.onend = () => {
         statusIndicator.textContent = "Idle";
         micBtn.style.opacity = "1";
-
-        // Resume listening automatically
         if (recognition && !listening) {
             try {
                 recognition.start();
@@ -330,21 +324,17 @@ function speakText(text, onEndCallback) {
                 console.warn("SpeechRecognition restart failed:", err);
             }
         }
-
         if (typeof onEndCallback === "function") onEndCallback();
     };
 
     window.speechSynthesis.speak(utterance);
 }
 
-// Preload voices for Chrome
 if (window.speechSynthesis) {
     window.speechSynthesis.onvoiceschanged = () => {
         window.speechSynthesis.getVoices();
         console.log("🔊 Voices preloaded");
     };
 }
-
-
 
 window.addEventListener("DOMContentLoaded", checkSessionLoop);
