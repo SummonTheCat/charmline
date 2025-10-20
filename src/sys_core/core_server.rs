@@ -8,10 +8,7 @@ use std::{
 };
 
 use crate::{
-    sys_core::{
-        core_responses::response_method_not_allowed,
-        core_routing::handle_route,
-    },
+    sys_core::{core_responses::response_method_not_allowed, core_routing::handle_route},
     sys_resource::CachedLoader,
 };
 
@@ -26,8 +23,15 @@ pub struct Server {
 
 impl Server {
     pub fn new(address: &str, base_dir: &str) -> Self {
+        use std::fs;
+        use std::path::PathBuf;
+
+        // Resolve to absolute path for clarity in logs
+        let full_path = fs::canonicalize(base_dir).unwrap_or_else(|_| PathBuf::from(base_dir));
+
+        println!("Static files served from: {}", full_path.display());
+
         let loader = Arc::new(CachedLoader::new(base_dir));
-        println!("Static files served from: {}", base_dir);
         Self {
             address: address.to_string(),
             loader,
