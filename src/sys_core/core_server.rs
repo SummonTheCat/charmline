@@ -27,6 +27,7 @@ pub struct Server {
 impl Server {
     pub fn new(address: &str, base_dir: &str) -> Self {
         let loader = Arc::new(CachedLoader::new(base_dir));
+        println!("Static files served from: {}", base_dir);
         Self {
             address: address.to_string(),
             loader,

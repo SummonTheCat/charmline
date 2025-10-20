@@ -65,32 +65,43 @@ pub fn handle_route(path: &str, loader: &Arc<CachedLoader>, body: &str) -> HttpR
     }
 }
 
-// Serve static files (html, css, js, images, etc.)
 fn serve_static(path: &str, loader: &Arc<CachedLoader>) -> HttpResponse {
     // Strip query params again for safety in direct calls
     let path = path.split('?').next().unwrap_or("").trim_start_matches('/');
+    println!("[serve_static] Requested path: {}", path);
 
     if path.contains("..") {
+        println!("[serve_static] Rejected invalid path with '..'");
         return response_not_found("Invalid path");
     }
 
     let content_type = content_type_for(path);
+    println!("[serve_static] Content type: {}", content_type);
 
     // Try direct file first
+    println!("[serve_static] Attempting direct load: {}", path);
     if let Some(file) = loader.load(path) {
+        println!("[serve_static] Found file directly: {}", path);
         return response_ok(content_type, file.bytes);
+    } else {
+        println!("[serve_static] Direct load failed for: {}", path);
     }
 
     // Fallback: /pages/{path}.html if no extension present
     if !path.contains('.') {
         let html_path = format!("pages/{}.html", path);
+        println!("[serve_static] Attempting fallback: {}", html_path);
         let content_type = "text/html; charset=utf-8";
 
         if let Some(file) = loader.load(&html_path) {
+            println!("[serve_static] Found fallback HTML: {}", html_path);
             return response_ok(content_type, file.bytes);
+        } else {
+            println!("[serve_static] Fallback failed for: {}", html_path);
         }
     }
 
+    println!("[serve_static] File not found for any path");
     response_not_found("File not found")
 }
 
